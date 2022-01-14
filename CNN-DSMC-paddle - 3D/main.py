@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import pickle
 from useful_function import *
@@ -6,7 +7,25 @@ from net import CNN_DSMC
 import time
 
 
+# def epoch(loader, training=False):
+#     total_loss = 0
+#     if training:
+#         model.train()
+#     else:
+#         model.eval()
+#     with paddle.static.device_guard('gpu'):
+#         for tensors in loader:
+#             loss, output = loss_func(model, tensors)
+#             if training:
+#                 optimizer.clear_grad()
+#                 loss.backward()
+#                 optimizer.step()
+#             total_loss += loss.item()
+#
+#     return total_loss
+
 def epoch(loader, training=False):
+    scaler = paddle.amp.GradScaler(init_loss_scaling=1024)
     total_loss = 0
     if training:
         model.train()
@@ -14,18 +33,20 @@ def epoch(loader, training=False):
         model.eval()
     with paddle.static.device_guard('gpu'):
         for tensors in loader:
-            loss, output = loss_func(model, tensors)
-            if training:
-                optimizer.clear_grad()
-                loss.backward()
-                optimizer.step()
-            total_loss += loss.item()
+            with paddle.amp.auto_cast():
+                loss, output = loss_func(model, tensors)
+                if training:
+                    scaled = scaler.scale(loss)
+                    scaled.backward()
+                    scaler.minimize(optimizer, scaled)
+                    optimizer.clear_grad()
+
+                total_loss += loss.item()
 
     return total_loss
 
 
 def train():
-
     for epoch_id in range(1, epochs + 1):
         begin = time.time()
         print("Epoch #" + str(epoch_id))
@@ -53,8 +74,12 @@ if __name__ == "__main__":
 
     x = pickle.load(open("./dataX.pkl", "rb"))
     y = pickle.load(open("./dataY.pkl", "rb"))
-    x = paddle.to_tensor(x, dtype="float32")
-    y = paddle.to_tensor(y, dtype="float32")
+    xx = x.copy()
+    yy = y.copy()
+    # xx = x[:, :, :, 75:175, 75:175]
+    # yy = y[:, :, :, 75:175, 75:175]
+    x = paddle.to_tensor(xx, dtype="float32")
+    y = paddle.to_tensor(yy, dtype="float32")
 
     train_data, test_data = split_tensors(x, y, ratio=0.9)
     train_dataset, test_dataset = TensorDataset([train_data[0], train_data[1]]), TensorDataset(
