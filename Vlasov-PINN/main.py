@@ -68,7 +68,7 @@ class PhysicsInformedNN():
         f = self.net_f(t, x, v)
 
         f_t = paddle.autograd.grad(f, t, grad_outputs=paddle.ones_like(f), retain_graph=True, create_graph=True)[0]
-        f_x = paddle.autograd.grad(f, v, grad_outputs=paddle.ones_like(f), retain_graph=True, create_graph=True)[0]
+        f_x = paddle.autograd.grad(f, x, grad_outputs=paddle.ones_like(f), retain_graph=True, create_graph=True)[0]
         f_v = paddle.autograd.grad(f, v, grad_outputs=paddle.ones_like(f), retain_graph=True, create_graph=True)[0]
 
         lambda_1 = self.lambda_1
