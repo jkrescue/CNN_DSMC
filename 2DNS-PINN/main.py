@@ -74,7 +74,7 @@ class PhysicsInformedNN():
         psi = psi_p[:, 0:1]
         p = psi_p[:, 1:2]
         u = paddle.autograd.grad(psi, y, grad_outputs=paddle.ones_like(psi), retain_graph=True, create_graph=True)[0]
-        v = -paddle.autograd.grad(psi, y, grad_outputs=paddle.ones_like(psi), retain_graph=True, create_graph=True)[0]
+        v = -paddle.autograd.grad(psi, x, grad_outputs=paddle.ones_like(psi), retain_graph=True, create_graph=True)[0]
 
         u_t = paddle.autograd.grad(u, t, grad_outputs=paddle.ones_like(u), retain_graph=True, create_graph=True)[0]
         u_x = paddle.autograd.grad(u, x, grad_outputs=paddle.ones_like(u), retain_graph=True, create_graph=True)[0]
